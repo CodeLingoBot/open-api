@@ -1,8 +1,16 @@
 package porcelain
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/go-openapi/runtime"
+	"github.com/go-openapi/strfmt"
+	"github.com/netlify/open-api/go/plumbing/operations"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetLFSSha(t *testing.T) {
@@ -64,4 +72,28 @@ func TestAddWithLargeMedia(t *testing.T) {
 	if out2 != "sum3:originalsha" {
 		t.Fatalf("expected `%v`, got `%v`", "sum3:originalsha", out2)
 	}
+}
+
+func TestUploadDeployFileWithTimeoutError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		rw.WriteHeader(http.StatusCreated)
+		rw.Write([]byte("test result"))
+	}))
+	defer server.Close()
+
+	httpClient := http.DefaultClient
+	authInfo := runtime.ClientAuthInfoWriterFunc(func(r runtime.ClientRequest, _ strfmt.Registry) error {
+		_ = r.SetHeaderParam("User-Agent", "buildbot")
+		_ = r.SetHeaderParam("Authorization", "Bearer 1234")
+		return nil
+	})
+
+	endpoint, _ := url.Parse(server.URL)
+	tr := apiClient.NewWithClient(endpoint, "/api/v1", []string{"http"}, httpClient)
+	client := NewRetryable(tr, strfmt.Default, 1)
+
+	params := operations.NewUploadDeployFileParams()
+	resp, operationError := client.Operations.UploadDeployFunction(params, authInfo)
+
+	require.NoError(t, operationError)
 }
