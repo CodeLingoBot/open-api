@@ -1,6 +1,8 @@
 package porcelain
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -8,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/go-openapi/runtime"
+	apiClient "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 	"github.com/netlify/open-api/go/plumbing/operations"
 	"github.com/stretchr/testify/require"
@@ -74,10 +77,11 @@ func TestAddWithLargeMedia(t *testing.T) {
 	}
 }
 
-func TestUploadDeployFileWithTimeoutError(t *testing.T) {
+func TestOpenAPIClientWithWeirdResponse(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		rw.WriteHeader(http.StatusCreated)
-		rw.Write([]byte("test result"))
+		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+		rw.WriteHeader(408)
+		rw.Write([]byte(`{ "foo": "bar", "message": "a message", "code": 408 }`))
 	}))
 	defer server.Close()
 
@@ -88,12 +92,13 @@ func TestUploadDeployFileWithTimeoutError(t *testing.T) {
 		return nil
 	})
 
-	endpoint, _ := url.Parse(server.URL)
-	tr := apiClient.NewWithClient(endpoint, "/api/v1", []string{"http"}, httpClient)
+	hu, _ := url.Parse(server.URL)
+	tr := apiClient.NewWithClient(hu.Host, "/api/v1", []string{"http"}, httpClient)
 	client := NewRetryable(tr, strfmt.Default, 1)
 
-	params := operations.NewUploadDeployFileParams()
-	resp, operationError := client.Operations.UploadDeployFunction(params, authInfo)
-
+	body := ioutil.NopCloser(bytes.NewReader([]byte("hello world")))
+	params := operations.NewUploadDeployFileParams().WithDeployID("1234").WithPath("foo/bar/biz").WithFileBody(body)
+	resp, operationError := client.Operations.UploadDeployFile(params, authInfo)
 	require.NoError(t, operationError)
+	require.EqualValues(t, resp, "foo bar")
 }

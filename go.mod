@@ -15,7 +15,7 @@ require (
 	github.com/go-openapi/jsonpointer v0.18.0 // indirect
 	github.com/go-openapi/jsonreference v0.18.0 // indirect
 	github.com/go-openapi/loads v0.18.0 // indirect
-	github.com/go-openapi/runtime v0.0.0-20180920151709-cdfa0fc2fd5 // TODO: temporarily floating  https://github.com/go-openapi/runtime/pull/131 update to > 0.18.0 once it is released
+	github.com/go-openapi/runtime v0.18.0
 	github.com/go-openapi/spec v0.18.0 // indirect
 	github.com/go-openapi/strfmt v0.18.0
 	github.com/go-openapi/swag v0.18.0
@@ -31,6 +31,7 @@ require (
 	github.com/kyoh86/xdg v1.0.0 // indirect
 	github.com/mailru/easyjson v0.0.0-20190221075403-6243d8e04c3f // indirect
 	github.com/mattn/go-isatty v0.0.6 // indirect
+	github.com/pkg/errors v0.8.1
 	github.com/rsc/goversion v1.2.0
 	github.com/sirupsen/logrus v1.3.0
 	github.com/spf13/afero v1.2.1 // indirect
@@ -44,3 +45,5 @@ require (
 	golang.org/x/text v0.3.1-0.20180807135948-17ff2d5776d2 // indirect
 	golang.org/x/tools v0.0.0-20190114222345-bf090417da8b // indirect
 )
+
+replace github.com/go-openapi/runtime => /Users/bret/gohack/github.com/go-openapi/runtime
